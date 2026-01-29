@@ -1,51 +1,70 @@
+
+
 // src/pages/Login.jsx
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { setUser } from "../redux/slices/authSlice";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    setError("");
+
     if (!username || !password) {
-      alert("Please enter username and password");
+      setError("Username and password are required");
       return;
     }
 
-    // ✅ Get registered user from localStorage
-    const registeredUser = JSON.parse(localStorage.getItem("registeredUser"));
+    try {
+      const res = await fetch("https://dummyjson.com/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          password,
+          expiresInMins: 30,
+        }),
+      });
 
-    if (
-      registeredUser &&
-      username === registeredUser.username &&
-      password === registeredUser.password
-    ) {
-      // ✅ Save user + token in Redux
-      dispatch(setUser({ user: registeredUser, token: registeredUser.token }));
+      if (!res.ok) {
+        throw new Error("Invalid username or password");
+      }
 
-      // ✅ Save token in localStorage
-      localStorage.setItem("token", registeredUser.token);
+      const data = await res.json();
 
-      // Navigate to products page
+      // Redux store
+      dispatch(setUser({ user: data, token: data.token }));
+
+      // LocalStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data));
+
       navigate("/products");
-    } else {
-      alert("Invalid credentials");
+    } catch (err) {
+      setError(err.message);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded shadow-md w-96">
-        <h1 className="text-2xl font-bold mb-4 text-center">Login</h1>
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="bg-white p-6 w-96 rounded shadow">
+        <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
+
+        {error && (
+          <p className="text-red-500 text-sm mb-3 text-center">{error}</p>
+        )}
 
         <input
           type="text"
           placeholder="Username"
-          className="border p-2 mb-3 w-full rounded"
+          className="border p-2 w-full mb-3 rounded"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
@@ -53,27 +72,17 @@ const Login = () => {
         <input
           type="password"
           placeholder="Password"
-          className="border p-2 mb-3 w-full rounded"
+          className="border p-2 w-full mb-4 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
         <button
           onClick={handleLogin}
-          className="bg-blue-500 text-white py-2 rounded w-full hover:bg-blue-600 transition"
+          className="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700"
         >
           Login
         </button>
-
-        <p className="mt-4 text-center text-sm">
-          Don't have an account?{" "}
-          <Link
-            to="/register"
-            className="text-blue-500 hover:underline font-semibold"
-          >
-            Register here
-          </Link>
-        </p>
       </div>
     </div>
   );

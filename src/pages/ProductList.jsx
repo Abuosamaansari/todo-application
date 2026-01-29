@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../redux/slices/productSlice";
+import CRUDPage from "./CRUDPage";
 
 const ProductList = () => {
   const dispatch = useDispatch();
@@ -13,7 +14,9 @@ const ProductList = () => {
   if (status === "loading") return <p className="text-center mt-8">Loading...</p>;
 
   return (
+    
     <div className="p-8">
+      <CRUDPage/>
       <h1 className="text-2xl font-bold mb-4">Products</h1>
       <table className="min-w-full border border-gray-300">
         <thead className="bg-gray-200">
